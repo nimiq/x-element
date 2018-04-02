@@ -158,19 +158,21 @@ export default class XElement {
             let event, selector;
             if (key.includes(' ')) [ event, selector ] = key.split(' ');
             else [ event, selector ] = [ key, undefined ];
-            const target = selector ? this.$(selector) : this;
+            const targets = selector ? this.$$(selector) : [this];
 
-            this._boundListeners.set(key, { target, event, listener: e => {
-                const method = listeners[key];
-                const event = e;
-                const detail = e.detail !== undefined ? e.detail : e;
-                // passing detail AND event to enable usecase where detail is set, but the event is required while at
-                // the same time being backwards compatible, i.e. "old" callback will just ignore the second parameter.
-                if (method instanceof Function) method.call(this, detail, event);
-                else this[method](event);
-            }});
+            for (let target of targets) {
+                this._boundListeners.set(key, { target, event, listener: e => {
+                        const method = listeners[key];
+                        const event = e;
+                        const detail = e.detail !== undefined ? e.detail : e;
+                        // passing detail AND event to enable usecase where detail is set, but the event is required while at
+                        // the same time being backwards compatible, i.e. "old" callback will just ignore the second parameter.
+                        if (method instanceof Function) method.call(this, detail, event);
+                        else this[method](event);
+                    }});
 
-            target.addEventListener(event, this._boundListeners.get(key).listener);
+                target.addEventListener(event, this._boundListeners.get(key).listener);
+            }
         }
     }
 
